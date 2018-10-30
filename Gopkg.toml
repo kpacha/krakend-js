@@ -1,0 +1,7 @@
+[[constraint]]
+  name = "github.com/devopsfaith/krakend"
+  branch = "file_reader_func"
+
+[prune]
+  go-tests = true
+  unused-packages = true

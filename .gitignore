@@ -1,0 +1,4 @@
+vendor/
+server/static/lib.wasm
+server/static/wasm_exec.js
+local-server
