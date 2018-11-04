@@ -14,9 +14,20 @@
   pruneopts = "UT"
   revision = "ce29940c69112fcf6dbc324ee5499546deee53d3"
 
+[[projects]]
+  branch = "master"
+  digest = "1:c7f28b42d3d2f56743bfaf004ff4e33d5e9e16aceabfa5e7a39cd5e8cf3580e9"
+  name = "github.com/devopsfaith/krakend-config2dot"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9a3b20d129dad658920a35e0a29f1d2416b9096f"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/devopsfaith/krakend/config"]
+  input-imports = [
+    "github.com/devopsfaith/krakend-config2dot",
+    "github.com/devopsfaith/krakend/config",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

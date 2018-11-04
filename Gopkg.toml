@@ -2,6 +2,10 @@
   name = "github.com/devopsfaith/krakend"
   branch = "file_reader_func"
 
+[[constraint]]
+  name = "github.com/devopsfaith/krakend-config2dot"
+  branch = "master"
+
 [prune]
   go-tests = true
   unused-packages = true
