@@ -1,0 +1,55 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<script src="//d3js.org/d3.v4.min.js"></script>
+		<script src="https://unpkg.com/viz.js@1.8.0/viz.js" type="javascript/worker"></script>
+		<script src="https://unpkg.com/d3-graphviz@1.4.0/build/d3-graphviz.min.js"></script>
+		<script src="wasm_exec.js"></script>
+		<script>
+			if (!WebAssembly.instantiateStreaming) { // polyfill
+				WebAssembly.instantiateStreaming = async (resp, importObject) => {
+					const source = await (await resp).arrayBuffer();
+					return await WebAssembly.instantiate(source, importObject);
+				};
+			}
+
+			const go = new Go();
+			let mod, inst;
+			WebAssembly.instantiateStreaming(fetch("lib.wasm"), go.importObject).then(async (result) => {
+				mod = result.module;
+				inst = result.instance;
+				await go.run(inst)
+			});
+		</script>
+		<script>
+			function draw(id, content){
+				d3.select('#'+id).graphviz().fade(false).renderDot(content);
+			}
+		</script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	</head>
+	<body>
+		<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+			<h5 class="my-0 mr-md-auto font-weight-normal">KrakenD Config Explorer</h5>
+			<nav class="my-2 my-md-0 mr-md-3">
+				<a class="p-2 text-dark" href="https://www.krakend.io/">Project</a>
+				<a class="p-2 text-dark" href="https://www.krakend.io/download/">Download</a>
+			</nav>
+		</div>
+
+		<div class="container">
+			<div class="form-group">
+				<label for="input">Enter your KrakenD config here</label>
+				<textarea class="form-control" id="input" rows="3"></textarea>
+			</div>
+			<button onClick="parse('input','output');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+			<button onClick="dotParser('input','output', 'graph');" type="dotButton" class="btn btn-primary mb-2">Generate Dot</button>
+
+			<div>
+				<code id="output"></code>
+			</div>
+			<div id="graph" style="text-align: center;"></div>
+		</div>
+
+	</body>
+</html>
