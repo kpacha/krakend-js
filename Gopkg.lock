@@ -2,14 +2,26 @@
 
 
 [[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  pruneopts = "UT"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
+
+[[projects]]
   branch = "file_reader_func"
-  digest = "1:6df3f74dc43c2720c1f50bb1d3773bbedb80eb61f593ea39b10441c55fbb8446"
+  digest = "1:12bbd0a68faf09750aa967d6c226e995862868497aaa33596ccadab6ee059901"
   name = "github.com/devopsfaith/krakend"
   packages = [
     "config",
     "encoding",
+    "logging",
+    "proxy",
     "register",
     "register/internal",
+    "sd",
+    "transport/http/client",
   ]
   pruneopts = "UT"
   revision = "ce29940c69112fcf6dbc324ee5499546deee53d3"
@@ -26,8 +38,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/davecgh/go-spew/spew",
     "github.com/devopsfaith/krakend-config2dot",
     "github.com/devopsfaith/krakend/config",
+    "github.com/devopsfaith/krakend/logging",
+    "github.com/devopsfaith/krakend/proxy",
+    "github.com/devopsfaith/krakend/transport/http/client",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

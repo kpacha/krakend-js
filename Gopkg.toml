@@ -6,6 +6,10 @@
   name = "github.com/devopsfaith/krakend-config2dot"
   branch = "master"
 
+[[constraint]]
+  name = "github.com/davecgh/go-spew"
+  version = "v1.1.1"
+
 [prune]
   go-tests = true
   unused-packages = true

@@ -42,11 +42,28 @@
 				<label for="input">Enter your KrakenD config here</label>
 				<textarea class="form-control" id="input" rows="3"></textarea>
 			</div>
-			<button onClick="parse('input','output');" type="runButton" class="btn btn-primary mb-2">Parse</button>
-			<button onClick="dotParser('input','output', 'graph');" type="dotButton" class="btn btn-primary mb-2">Generate Dot</button>
+
+			<button onClick="parse('input','configDescription','endpointSelect');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+			<button onClick="dotParser('graph');" type="dotButton" class="btn btn-primary mb-2">Generate Dot</button>
+
+			<div class="form-group">
+				<label for="endpointSelect">Endpoint</label>
+				<select class="form-control" id="endpointSelect">
+				</select>
+				<label for="request">Request params</label>
+				<textarea class="form-control" id="request" rows="3">{}</textarea>
+			</div>
+
+			<button onClick="testEndpoint('endpointSelect', 'request', 'output');" type="testButton" class="btn btn-primary mb-2">Send Sample Request</button>
 
 			<div>
-				<code id="output"></code>
+				<h4>Response</h4>
+				<pre id="output"></pre>
+			</div>
+
+			<div>
+				<h4>Config</h4>
+				<pre id="configDescription"></pre>
 			</div>
 			<div id="graph" style="text-align: center;"></div>
 		</div>
