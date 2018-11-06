@@ -1,0 +1,236 @@
+<html>
+	<head>
+		<title>KrakenD Config Explorer</title>
+		<style>
+			canvas { width: 100%; height: 100% }
+		</style>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	</head>
+	<body>
+		<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+			<h5 class="my-0 mr-md-auto font-weight-normal">KrakenD Config Explorer</h5>
+			<nav class="my-2 my-md-0 mr-md-3">
+				<a class="p-2 text-dark" href="/">Basic Viewer</a>
+				<a class="p-2 text-dark" href="/city.html">Code City Viewer</a>
+				<a class="p-2 text-dark" href="https://www.krakend.io/">Project</a>
+				<a class="p-2 text-dark" href="https://www.krakend.io/download/">Download</a>
+			</nav>
+		</div>
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="input">Enter your KrakenD config here</label>
+						<textarea class="form-control" id="input" rows="10">{
+    "version": 2,
+    "name": "My lovely gateway",
+    "port": 8000,
+    "cache_ttl": "3600s",
+    "timeout": "3s",
+    "extra_config": {
+      "github_com/devopsfaith/krakend-gologging": {
+        "level":  "DEBUG",
+        "prefix": "[KRAKEND]",
+        "syslog": false,
+        "stdout": true
+      },
+      "github_com/devopsfaith/krakend-cors": {
+        "allow_origins": [ "http://192.168.99.100:8080", "http://192.168.99.101:8080", "http://localhost:8080" ],
+        "allow_methods": [ "POST", "GET" ],
+        "allow_headers": [ "Origin", "Authorization", "Content-Type" ],
+        "expose_headers": [ "Content-Length" ],
+        "max_age": "12h"
+      },
+      "github_com/devopsfaith/krakend-swagger": {
+        "fraction": 0.1,
+        "host": "localhost:8000",
+        "path":"/swagger.json",
+        "refresh": "10s",
+        "version": "0.1.0",
+        "contact.name": "kpacha",
+        "contact.url": "https://www.krakend.io",
+        "tags": ["tag1", "tag2"]
+      }
+    },
+    "endpoints": [
+        {
+            "endpoint": "/git/{user}",
+            "method": "GET",
+            "backend": [
+                {
+                    "host": [
+                        "https://api.github.com"
+                    ],
+                    "url_pattern": "/users/{user}",
+                      "whitelist": [
+                        "avatar_url",
+                        "name",
+                        "company",
+                        "blog",
+                        "location",
+                        "mail",
+                        "hireable",
+                        "followers",
+                        "public_repos",
+                        "public_gists"
+                      ],
+                      "mapping": { "blog": "website" },
+                      "group": "github"
+                },
+                {
+                  "host": [ "https://api.bitbucket.org" ],
+                  "url_pattern": "/2.0/users/{user}",
+                  "whitelist": [
+                    "links.avatar",
+                    "display_name",
+                    "website",
+                    "location"
+                  ],
+                  "mapping": { "display_name": "name" },
+                  "group": "bitbucket"
+                }
+            ],
+            "extra_config": {
+                "github_com/devopsfaith/krakend-swagger": {
+                    "description": "very long description of what this endpoint does",
+                    "summary": "recover info from popular git services",
+                    "tags": ["group"]
+                }
+            }
+        },
+        {
+            "endpoint": "/file/{file}",
+            "output_encoding": "no-op",
+            "backend": [
+                {
+                    "url_pattern": "/{file}",
+                    "encoding": "no-op",
+                    "host": ["http://127.0.0.1:8080"]
+                }
+            ]
+        },
+        {
+            "endpoint": "/supu",
+            "method": "GET",
+            "headers_to_pass": ["Authorization", "Content-Type"],
+            "backend": [
+                {
+                    "host": [
+                        "http://127.0.0.1:8000"
+                    ],
+                    "url_pattern": "/__debug/supu"
+                }
+            ]
+        }
+    ]
+}
+</textarea>
+					</div>
+
+					<button onClick="parse('input');cityParser('drawStringCity');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+				</div>
+				<div class="col-9">
+					<canvas id="canvas" width="1" height="1">
+            		  Sorry, your browser doesn't support the &lt;canvas&gt; element.
+            		</canvas>
+				</div>
+			</div>
+		</div>
+		<script src="wasm_exec.js"></script>
+		<script>
+			if (!WebAssembly.instantiateStreaming) { // polyfill
+				WebAssembly.instantiateStreaming = async (resp, importObject) => {
+					const source = await (await resp).arrayBuffer();
+					return await WebAssembly.instantiate(source, importObject);
+				};
+			}
+
+			const go = new Go();
+			let mod, inst;
+			WebAssembly.instantiateStreaming(fetch("lib.wasm"), go.importObject).then(async (result) => {
+				mod = result.module;
+				inst = result.instance;
+				await go.run(inst)
+			});
+		</script>
+		<script>
+			function draw(id, content){
+				d3.select('#'+id).graphviz().fade(false).renderDot(content);
+			}
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/98/three.min.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x333333 );
+			scene.add( new THREE.AmbientLight( 0xffffff ) );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize(9*window.innerWidth/12, window.innerHeight);
+			document.getElementById("canvas").replaceWith(renderer.domElement);
+
+			var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
+			var controls = new THREE.OrbitControls(camera, renderer.domElement);
+			// document.body.appendChild(renderer.domElement);
+
+			var nodes = [];
+
+			function render() {
+				requestAnimationFrame(render);
+				controls.update();
+				renderer.render(scene, camera);
+			}
+
+			function drawStringCity(data) {
+				drawCity(JSON.parse(data));
+			}
+
+			function drawCity(data) {
+				for (var i = nodes.length - 1; i >= 0; i--) {
+					scene.remove(nodes[i]);
+				}
+				nodes = [];
+
+				console.log(data);
+				drawNode("",data,0,0,-20,0);
+
+				camera.position.z = 100;
+				camera.position.y = 50;
+				controls.update();
+
+				render();
+			}
+
+			function drawNode(branch, node, level, x, y, z) {
+				var width = node.width;
+				var height = node.dimm1+node.dimm2+3;
+				var depth = node.depth;
+				var geometry = new THREE.BoxGeometry(width, height, depth, 4, 4, 4);
+
+				node.color = node.color || "0x00f00"
+				var material = new THREE.MeshBasicMaterial({color: parseInt(node.color, 16)});
+
+				var cube = new THREE.Mesh(geometry, material);
+				cube.position.x = x+node.position.x;
+				cube.position.z = z+node.position.y;
+				cube.position.y = y+height/2;
+				scene.add(cube);
+				nodes.push(cube);
+
+				node.children = node.children || [];
+
+				for (var i = node.children.length - 1; i >= 0; i--) {
+					drawNode(branch+"/"+node.name, node.children[i], level+1, cube.position.x, y+height, cube.position.z);
+				}
+			}
+
+			function loadDoc(f) {
+				fetch("/nodes.json")
+					.then(data=>{return data.json()})
+					.then(res=>{f(res)});
+			}
+
+			loadDoc(drawCity);
+		</script>
+	</body>
+</html>

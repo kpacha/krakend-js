@@ -15,6 +15,7 @@ import (
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
 	"github.com/devopsfaith/krakend/transport/http/client"
+	jsconfig "github.com/kpacha/krakend-js/config"
 )
 
 var (
@@ -24,6 +25,15 @@ var (
 
 func init() {
 	document = js.Global().Get("document")
+}
+
+func cityParser(i []js.Value) {
+	println("cityParser")
+
+	cfg := jsconfig.Parse(configuration)
+	b, _ := json.Marshal(cfg)
+
+	js.Global().Call(i[0].String(), js.ValueOf(string(b)))
 }
 
 func testEndpoint(i []js.Value) {
@@ -79,7 +89,7 @@ func dotParser(i []js.Value) {
 	buf := new(bytes.Buffer)
 	dot.ServiceConfig(configuration).WriteTo(buf)
 
-	js.Global().Call("draw", i[0], js.ValueOf(buf.String()))
+	js.Global().Call(i[0].String(), i[1], js.ValueOf(buf.String()))
 }
 
 func parse(i []js.Value) {
@@ -92,6 +102,10 @@ func parse(i []js.Value) {
 	}
 
 	configuration = cfg
+
+	if len(i) == 1 {
+		return
+	}
 
 	setElementValue(i[1].String(), spew.Sdump(cfg))
 	selector := document.Call("getElementById", i[2].String())
@@ -123,6 +137,7 @@ func main() {
 
 	js.Global().Set("parse", js.NewCallback(parse))
 	js.Global().Set("dotParser", js.NewCallback(dotParser))
+	js.Global().Set("cityParser", js.NewCallback(cityParser))
 	js.Global().Set("testEndpoint", js.NewCallback(testEndpoint))
 
 	select {}
