@@ -11,3 +11,6 @@ build_server:
 
 run:
 	./local-server -dir ./server/static
+
+publish:
+	cp ./server/static/* ./docs/.
