@@ -20,111 +20,14 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
+						<label for="url">Enter the URL to your KrakenD config</label>
+						<input class="form-control" id="url" type="text" value="https://raw.githubusercontent.com/devopsfaith/krakend-config2dot/master/docs/config_1.json"/>
+					</div>
+					<button onClick="getExternalConfig('url');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+
+					<div class="form-group">
 						<label for="input">Enter your KrakenD config here</label>
-						<textarea class="form-control" id="input" rows="10">{
-    "version": 2,
-    "name": "My lovely gateway",
-    "port": 8000,
-    "cache_ttl": "3600s",
-    "timeout": "3s",
-    "extra_config": {
-      "github_com/devopsfaith/krakend-gologging": {
-        "level":  "DEBUG",
-        "prefix": "[KRAKEND]",
-        "syslog": false,
-        "stdout": true
-      },
-      "github_com/devopsfaith/krakend-cors": {
-        "allow_origins": [ "http://192.168.99.100:8080", "http://192.168.99.101:8080", "http://localhost:8080" ],
-        "allow_methods": [ "POST", "GET" ],
-        "allow_headers": [ "Origin", "Authorization", "Content-Type" ],
-        "expose_headers": [ "Content-Length" ],
-        "max_age": "12h"
-      },
-      "github_com/devopsfaith/krakend-swagger": {
-        "fraction": 0.1,
-        "host": "localhost:8000",
-        "path":"/swagger.json",
-        "refresh": "10s",
-        "version": "0.1.0",
-        "contact.name": "kpacha",
-        "contact.url": "https://www.krakend.io",
-        "tags": ["tag1", "tag2"]
-      }
-    },
-    "endpoints": [
-        {
-            "endpoint": "/git/{user}",
-            "method": "GET",
-            "backend": [
-                {
-                    "host": [
-                        "https://api.github.com"
-                    ],
-                    "url_pattern": "/users/{user}",
-                      "whitelist": [
-                        "avatar_url",
-                        "name",
-                        "company",
-                        "blog",
-                        "location",
-                        "mail",
-                        "hireable",
-                        "followers",
-                        "public_repos",
-                        "public_gists"
-                      ],
-                      "mapping": { "blog": "website" },
-                      "group": "github"
-                },
-                {
-                  "host": [ "https://api.bitbucket.org" ],
-                  "url_pattern": "/2.0/users/{user}",
-                  "whitelist": [
-                    "links.avatar",
-                    "display_name",
-                    "website",
-                    "location"
-                  ],
-                  "mapping": { "display_name": "name" },
-                  "group": "bitbucket"
-                }
-            ],
-            "extra_config": {
-                "github_com/devopsfaith/krakend-swagger": {
-                    "description": "very long description of what this endpoint does",
-                    "summary": "recover info from popular git services",
-                    "tags": ["group"]
-                }
-            }
-        },
-        {
-            "endpoint": "/file/{file}",
-            "output_encoding": "no-op",
-            "backend": [
-                {
-                    "url_pattern": "/{file}",
-                    "encoding": "no-op",
-                    "host": ["http://127.0.0.1:8080"]
-                }
-            ]
-        },
-        {
-            "endpoint": "/supu",
-            "method": "GET",
-            "headers_to_pass": ["Authorization", "Content-Type"],
-            "backend": [
-                {
-                    "host": [
-                        "http://127.0.0.1:8000"
-                    ],
-                    "url_pattern": "/__debug/supu"
-                }
-            ]
-        }
-    ]
-}
-</textarea>
+						<textarea class="form-control" id="input" rows="10"></textarea>
 					</div>
 
 					<button onClick="parse('input');cityParser('drawStringCity');" type="runButton" class="btn btn-primary mb-2">Parse</button>
@@ -238,13 +141,24 @@
 				}
 			}
 
-			function loadDoc(f) {
+			function loadInitialDoc() {
 				fetch("https://raw.githubusercontent.com/kpacha/krakend-js/master/docs/nodes.json")
 					.then(data=>{return data.json()})
-					.then(res=>{f(res)});
+					.then(res=>{drawCity(res)});
 			}
 
-			loadDoc(drawCity);
+			function getExternalConfig(url) {
+				fetch(document.getElementById(url).value)
+					.then(data=>{return data.json()})
+					.then(res=>{
+						console.log("data fetched: " + res);
+						document.getElementById('input').value = JSON.stringify(res);
+						parse('input');
+						cityParser('drawStringCity');
+					});
+			}
+
+			loadInitialDoc();
 		</script>
 	</body>
 </html>
