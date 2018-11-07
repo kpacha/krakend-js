@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"math"
+	"net/http"
 
 	"github.com/devopsfaith/krakend/config"
 )
@@ -19,15 +20,23 @@ func Parse(cfg config.ServiceConfig) *Block {
 	}
 
 	children := []*Block{}
-	for method, bs := range methods {
-		children = append(children, newBlock(method, 0, 0, bs...))
+	for _, method := range httpMethods {
+		ms, ok := methods[method]
+		if !ok {
+			continue
+		}
+		b := newBlock(method, 0, 0, ms...)
+		b.Color = colorOK
+		children = append(children, b)
 	}
 
-	// TODO: add global mws
+	for i := range cfg.ExtraConfig {
+		children = []*Block{newBlock(i, 4, 4, children...)}
+	}
 
 	b := newBlock(cfg.Name, 0, 0, children...)
 	b.GenerateChildrenPosition()
-	b.Color = colorNothing
+	b.Color = colorOK
 	return b
 }
 
@@ -41,18 +50,22 @@ func parseEndpoint(cfg *config.EndpointConfig) *Block {
 		child.Color = colorDanger
 		children = []*Block{child}
 	}
-	// for i := range cfg.ExtraConfig {
-	// 	child := newBlock(i, 1, 1, children...)
-	// 	child.Color = colorDanger
-	// 	children[0] = child
-	// }
-	// TODO: add proxy & router mws
-	b := newBlock(cfg.Endpoint, 5, 5, children...)
+	b := newBlock("Proxy", 0, 0, children...)
+	b.Color = colorCaution
+	for i := range cfg.ExtraConfig {
+		b = newBlock(i, 4, 4, b)
+	}
+
+	b = newBlock(cfg.Endpoint, 5, 5, b)
 	b.Color = colorRegular
 	return b
 }
 
 func parseBackend(cfg *config.Backend) *Block {
+	children := []*Block{}
+	for i := range cfg.ExtraConfig {
+		children = []*Block{newBlock(i, 4, 4, children...)}
+	}
 	complexity := cfg.ConcurrentCalls
 	if cfg.Group != "" {
 		complexity++
@@ -60,15 +73,12 @@ func parseBackend(cfg *config.Backend) *Block {
 	if cfg.Target != "" {
 		complexity++
 	}
-	child := newBlock(cfg.URLPattern, len(cfg.URLKeys)+1, complexity+1)
+	complexity += len(cfg.URLKeys)
+	child := newBlock(cfg.URLPattern, complexity+4, complexity+4, children...)
 	child.Color = colorCaution
 	if t := len(cfg.Host); t > 1 {
 		child = newBlock("LB", t, t, child)
 		child.Color = colorRegular
-	}
-	for i := range cfg.ExtraConfig {
-		child = newBlock(i, 1, 1, child)
-		child.Color = colorDanger
 	}
 	if len(cfg.Blacklist) > 0 || len(cfg.Whitelist) > 0 {
 		child = newBlock("Filter", len(cfg.Blacklist), len(cfg.Whitelist), child)
@@ -115,6 +125,20 @@ const (
 	colorRegular = "0x00a6ed"
 	colorOK      = "0x7fb800"
 	colorNothing = "0x0d2c54"
+)
+
+var (
+	httpMethods = []string{
+		http.MethodGet,
+		http.MethodHead,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+		http.MethodConnect,
+		http.MethodOptions,
+		http.MethodTrace,
+	}
 )
 
 func (b *Block) String() string {
