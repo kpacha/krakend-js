@@ -137,6 +137,8 @@
 			</div>
 		</div>
 		<script src="wasm_exec.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/98/three.min.js"></script>
+		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 		<script>
 			if (!WebAssembly.instantiateStreaming) { // polyfill
 				WebAssembly.instantiateStreaming = async (resp, importObject) => {
@@ -152,18 +154,31 @@
 				inst = result.instance;
 				await go.run(inst)
 			});
-		</script>
-		<script>
-			function draw(id, content){
-				d3.select('#'+id).graphviz().fade(false).renderDot(content);
-			}
-		</script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/98/three.min.js"></script>
-		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-		<script>
+
 			var scene = new THREE.Scene();
 			scene.background = new THREE.Color( 0x333333 );
-			scene.add( new THREE.AmbientLight( 0xffffff ) );
+
+			var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+			hemiLight.color.setHSL( 0.6, 1, 0.6 );
+			hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+			hemiLight.position.set( 0, 150, 0 );
+			scene.add( hemiLight );
+
+			var dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+			dirLight.color.setHSL( 0.1, 1, 0.95 );
+			dirLight.position.set( - 1, 1.75, 1 );
+			dirLight.position.multiplyScalar( 30 );
+			scene.add( dirLight );
+			dirLight.castShadow = true;
+			dirLight.shadow.mapSize.width = 2048;
+			dirLight.shadow.mapSize.height = 2048;
+			var d = 50;
+			dirLight.shadow.camera.left = - d;
+			dirLight.shadow.camera.right = d;
+			dirLight.shadow.camera.top = d;
+			dirLight.shadow.camera.bottom = - d;
+			dirLight.shadow.camera.far = 3500;
+			dirLight.shadow.bias = - 0.0001;
 
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize(9*window.innerWidth/12, window.innerHeight);
@@ -171,7 +186,6 @@
 
 			var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			var controls = new THREE.OrbitControls(camera, renderer.domElement);
-			// document.body.appendChild(renderer.domElement);
 
 			var nodes = [];
 
@@ -208,7 +222,7 @@
 				var geometry = new THREE.BoxGeometry(width, height, depth, 4, 4, 4);
 
 				node.color = node.color || "0x00f00"
-				var material = new THREE.MeshBasicMaterial({color: parseInt(node.color, 16)});
+				var material = new THREE.MeshLambertMaterial({color: parseInt(node.color, 16)});
 
 				var cube = new THREE.Mesh(geometry, material);
 				cube.position.x = x+node.position.x;
@@ -225,7 +239,7 @@
 			}
 
 			function loadDoc(f) {
-				fetch("/nodes.json")
+				fetch("https://raw.githubusercontent.com/kpacha/krakend-js/master/docs/nodes.json")
 					.then(data=>{return data.json()})
 					.then(res=>{f(res)});
 			}
