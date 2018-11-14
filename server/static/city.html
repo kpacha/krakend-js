@@ -3,6 +3,11 @@
 		<title>KrakenD Config Explorer</title>
 		<style>
 			canvas { width: 100%; height: 100% }
+			.card-body #dat-gui ul, .card-body #dat-gui li {
+			    list-style-type: none;
+				list-style-position: initial;
+				list-style: none;
+			}
 		</style>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 	</head>
@@ -18,19 +23,46 @@
 		</div>
 		<div class="container-fluid">
 			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label for="url">Enter the URL to your KrakenD config</label>
-						<input class="form-control" id="url" type="text" value="https://raw.githubusercontent.com/devopsfaith/krakend-config2dot/master/docs/config_1.json"/>
-					</div>
-					<button onClick="getExternalConfig('url');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+				<div class="col-3">
 
-					<div class="form-group">
-						<label for="input">Enter your KrakenD config here</label>
-						<textarea class="form-control" id="input" rows="10"></textarea>
+					<div id="accordion">
+					  <div class="card">
+					    <div class="card-header" id="headingOne">
+					      <h5 class="mb-0">
+					        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Select config</button>
+					      </h5>
+					    </div>
+					    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+					      <div class="card-body">
+							<div class="form-group">
+								<label for="url">Enter the URL to your KrakenD config</label>
+								<input class="form-control" id="url" type="text" value="https://raw.githubusercontent.com/devopsfaith/krakend-config2dot/master/docs/config_1.json"/>
+							</div>
+							<button onClick="getExternalConfig('url');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+
+							<div class="form-group">
+								<label for="input">Enter your KrakenD config here</label>
+								<textarea class="form-control" id="input" rows="10"></textarea>
+							</div>
+
+							<button onClick="parse('input');cityParser('drawStringCity');" type="runButton" class="btn btn-primary mb-2">Parse</button>
+					      </div>
+					    </div>
+					  </div>
+					  <div class="card">
+					    <div class="card-header" id="headingTwo">
+					      <h5 class="mb-0">
+					        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">Explore</button>
+					      </h5>
+					    </div>
+					    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+					      <div class="card-body">
+					        <ul id="dat-gui"></ul>
+					      </div>
+					    </div>
+					  </div>
 					</div>
 
-					<button onClick="parse('input');cityParser('drawStringCity');" type="runButton" class="btn btn-primary mb-2">Parse</button>
 				</div>
 				<div class="col-9">
 					<canvas id="canvas" width="1" height="1">
@@ -42,6 +74,9 @@
 		<script src="wasm_exec.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/98/three.min.js"></script>
 		<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 		<script>
 			if (!WebAssembly.instantiateStreaming) { // polyfill
 				WebAssembly.instantiateStreaming = async (resp, importObject) => {
@@ -83,13 +118,13 @@
 			dirLight.shadow.camera.far = 3500;
 			dirLight.shadow.bias = - 0.0001;
 
-			var renderer = new THREE.WebGLRenderer();
+			var renderer = new THREE.WebGLRenderer({canvas: document.getElementById( 'canvas' )});
 			renderer.setSize(9*window.innerWidth/12, window.innerHeight);
-			document.getElementById("canvas").replaceWith(renderer.domElement);
 
 			var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 10000);
 			var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+			var gui = document.getElementById('dat-gui');
 			var nodes = [];
 
 			function render() {
@@ -104,12 +139,15 @@
 
 			function drawCity(data) {
 				for (var i = nodes.length - 1; i >= 0; i--) {
-					scene.remove(nodes[i]);
+					scene.remove(nodes[i].cube);
+				}
+				for (var i = gui.children.length - 1; i >= 0; i--) {
+					gui.children[i].remove();
 				}
 				nodes = [];
 
 				console.log(data);
-				drawNode("",data,0,0,-20,0);
+				drawNode(gui,"",data,0,0,-20,0);
 
 				camera.position.z = 100;
 				camera.position.y = 50;
@@ -118,9 +156,10 @@
 				render();
 			}
 
-			function drawNode(branch, node, level, x, y, z) {
+			function drawNode(parent, branch, node, level, x, y, z) {
+				branch += "/"+node.name;
 				var width = node.width;
-				var height = node.dimm1+node.dimm2+3;
+				var height = node.height;
 				var depth = node.depth;
 				var geometry = new THREE.BoxGeometry(width, height, depth, 4, 4, 4);
 
@@ -132,17 +171,31 @@
 				cube.position.z = z+node.position.y;
 				cube.position.y = y+height/2;
 				scene.add(cube);
-				nodes.push(cube);
+
+				var li = document.createElement("li");
+				var title = document.createElement("div");
+				title.innerHTML = (node.name.length > 8) ? node.name.substring(0,8) + "..." : node.name;
+				li.appendChild(title);
+
+				nodes.push({cube:cube, node:node});//, folder:folder});
 
 				node.children = node.children || [];
 
+				var ul = document.createElement("ul");
 				for (var i = node.children.length - 1; i >= 0; i--) {
-					drawNode(branch+"/"+node.name, node.children[i], level+1, cube.position.x, y+height, cube.position.z);
+					// drawNode(folder, branch, node.children[i], level+1, cube.position.x, y+height, cube.position.z);
+					drawNode(ul, branch, node.children[i], level+1, cube.position.x, y+height, cube.position.z);
 				}
+				if (node.children.length > 0) {
+					li.appendChild(ul);
+				}
+
+				parent.appendChild(li);
 			}
 
 			function loadInitialDoc() {
-				fetch("https://raw.githubusercontent.com/kpacha/krakend-js/master/docs/nodes.json")
+				fetch("/nodes.json")
+				// fetch("https://raw.githubusercontent.com/kpacha/krakend-js/master/docs/nodes.json")
 					.then(data=>{return data.json()})
 					.then(res=>{drawCity(res)});
 			}
@@ -151,7 +204,6 @@
 				fetch(document.getElementById(url).value)
 					.then(data=>{return data.json()})
 					.then(res=>{
-						console.log("data fetched: " + res);
 						document.getElementById('input').value = JSON.stringify(res);
 						parse('input');
 						cityParser('drawStringCity');
